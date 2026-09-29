@@ -50,18 +50,22 @@ export const GeospatialFarmMap: React.FC<GeospatialFarmMapProps> = ({
   const { latitude, longitude } = currentFarm.location;
   const gibsUrl = NasaGibsVisualizationProvider.getGibsWmsUrl(latitude, longitude, gibsDate, gibsLayer, 0.35);
 
-  // Sub-parcels for the field parcel view
+  // Sub-parcels for the field parcel view derived dynamically from actual farm twin state & satellite observations
+  const realNdvi = satellite?.vegetationIndex?.ndvi ?? null;
+  const baseMoisture = currentFarm.currentState.soilMoisture ?? null;
+  const baseWaterStress = currentFarm.currentState.stressIndicators?.waterStress ?? 0.25;
+
   const subParcels = [
     {
       id: 'Sector-1',
       name: 'North Sector',
       areaHa: Math.round(currentFarm.farmConfiguration.farmSize * 0.35 * 100) / 100,
       crop: currentFarm.farmConfiguration.cropType,
-      ndvi: 0.68,
-      moisture: currentFarm.currentState.soilMoisture || 36,
-      stressScore: currentFarm.currentState.stressIndicators?.waterStress || 0.25,
-      status: 'Normal Vegetative Canopy',
-      color: activeLayer === 'ndvi' ? '#22c55e' : activeLayer === 'moisture' ? '#0ea5e9' : '#22c55e',
+      ndvi: realNdvi,
+      moisture: baseMoisture,
+      stressScore: baseWaterStress,
+      status: realNdvi ? (realNdvi > 0.6 ? 'Vigorous Vegetative Canopy' : 'Moderate Canopy') : 'Awaiting Sentinel-2 pass',
+      color: activeLayer === 'ndvi' ? (realNdvi && realNdvi > 0.6 ? '#22c55e' : '#84cc16') : activeLayer === 'moisture' ? '#0ea5e9' : '#22c55e',
       x: 30,
       y: 30,
       width: 180,
@@ -72,9 +76,9 @@ export const GeospatialFarmMap: React.FC<GeospatialFarmMapProps> = ({
       name: 'East Sector',
       areaHa: Math.round(currentFarm.farmConfiguration.farmSize * 0.30 * 100) / 100,
       crop: currentFarm.farmConfiguration.cropType,
-      ndvi: 0.62,
-      moisture: Math.max(20, (currentFarm.currentState.soilMoisture || 36) - 4),
-      stressScore: (currentFarm.currentState.stressIndicators?.waterStress || 0.25) + 0.08,
+      ndvi: realNdvi ? Math.max(0.1, Math.round((realNdvi - 0.04) * 100) / 100) : null,
+      moisture: baseMoisture !== null ? Math.max(15, baseMoisture - 4) : null,
+      stressScore: Math.min(1, baseWaterStress + 0.06),
       status: 'Moderate Moisture Gradient',
       color: activeLayer === 'ndvi' ? '#4ade80' : activeLayer === 'moisture' ? '#38bdf8' : '#eab308',
       x: 230,
@@ -87,9 +91,9 @@ export const GeospatialFarmMap: React.FC<GeospatialFarmMapProps> = ({
       name: 'South Sector',
       areaHa: Math.round(currentFarm.farmConfiguration.farmSize * 0.35 * 100) / 100,
       crop: currentFarm.farmConfiguration.cropType,
-      ndvi: 0.58,
-      moisture: Math.max(18, (currentFarm.currentState.soilMoisture || 36) - 6),
-      stressScore: (currentFarm.currentState.stressIndicators?.waterStress || 0.25) + 0.12,
+      ndvi: realNdvi ? Math.max(0.1, Math.round((realNdvi - 0.08) * 100) / 100) : null,
+      moisture: baseMoisture !== null ? Math.max(12, baseMoisture - 6) : null,
+      stressScore: Math.min(1, baseWaterStress + 0.10),
       status: 'Root-Zone Infiltration Watch',
       color: activeLayer === 'ndvi' ? '#84cc16' : activeLayer === 'moisture' ? '#7dd3fc' : '#f97316',
       x: 30,
@@ -326,8 +330,8 @@ export const GeospatialFarmMap: React.FC<GeospatialFarmMapProps> = ({
                         fontSize="9.5"
                         fontFamily="sans-serif"
                       >
-                        {activeLayer === 'ndvi' && `NDVI: ${parcel.ndvi.toFixed(2)}`}
-                        {activeLayer === 'moisture' && `Moisture: ${parcel.moisture}%`}
+                        {activeLayer === 'ndvi' && (parcel.ndvi !== null ? `NDVI: ${parcel.ndvi.toFixed(2)}` : 'NDVI: Pending Pass')}
+                        {activeLayer === 'moisture' && (parcel.moisture !== null ? `Moisture: ${parcel.moisture}%` : 'Moisture: Pending')}
                         {activeLayer === 'stress' && `Stress: ${parcel.stressScore.toFixed(2)}`}
                         {activeLayer === 'sentinel' && `${parcel.areaHa} ha`}
                       </text>

@@ -1,5 +1,5 @@
 /**
- * CropTwin - Geospatial Agronomy Intelligence & Digital Twin Platform
+ * TerraTwin - Agricultural Digital Twin Platform
  * Powered by Supabase Relational Persistence, Row Level Security, and Real Data Ingestion
  */
 
@@ -310,7 +310,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#0a0f15] text-slate-100 flex flex-col font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
-      {/* Universal CropTwin Header */}
+      {/* Universal TerraTwin Header */}
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -321,7 +321,7 @@ export default function App() {
       />
 
       {/* Main Operational Viewport */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 pb-20 md:pb-6">
         {/* VIEW 1: GEOSPATIAL PARCEL OVERVIEW */}
         {activeTab === 'overview' && (
           <OverviewView
@@ -336,7 +336,13 @@ export default function App() {
             weatherProvenance={weatherProvenance}
             satelliteProvenance={satelliteProvenance}
             soilProvenance={soilProvenance}
-            onNavigateTab={setActiveTab}
+            onNavigateTab={(tab) => {
+              if (tab === 'insights' || tab === 'advisories') setActiveTab('insights');
+              else if (tab === 'copilot') setActiveTab('copilot');
+              else if (tab === 'simulation') setActiveTab('simulation');
+              else if (tab === 'farms') setActiveTab('farms');
+              else setActiveTab(tab as any);
+            }}
             onSelectFarmId={setSelectedFarmId}
             allFarms={farms}
             onOpenAddFarm={() => setActiveTab('farms')}
@@ -354,7 +360,10 @@ export default function App() {
             farms={farms}
             selectedFarmId={selectedFarmId}
             onSelectFarm={(farm) => setSelectedFarmId(farm.twinId)}
-            onNavigateTab={setActiveTab}
+            onNavigateTab={(tab) => {
+              if (tab === 'advisories') setActiveTab('insights');
+              else setActiveTab(tab);
+            }}
             onCreateFarm={handleCreateFarm}
             onDeleteFarm={handleDeleteFarm}
           />
@@ -420,8 +429,8 @@ export default function App() {
           />
         )}
 
-        {/* VIEW 7: ADVISORY PRESCRIPTIONS & SMS DISPATCH */}
-        {activeTab === 'advisories' && (
+        {/* VIEW 7: ADVISORY PRESCRIPTIONS & INSIGHTS */}
+        {(activeTab === 'insights' || activeTab === 'advisories') && (
           <AdvisoryPanel
             advisories={advisories}
             farm={selectedFarm}
@@ -431,7 +440,7 @@ export default function App() {
           />
         )}
 
-        {/* VIEW 8: GEMINI AGRICULTURAL COPILOT */}
+        {/* VIEW 8: ASK TERRATWIN AI */}
         {activeTab === 'copilot' && (
           <GeminiCopilotView
             farm={selectedFarm}
@@ -443,7 +452,7 @@ export default function App() {
             satelliteStatus={satelliteStatus}
             soilStatus={soilStatus}
             onNavigateTab={(tab) => {
-              if (tab === 'advisories') setActiveTab('advisories');
+              if (tab === 'advisories') setActiveTab('insights');
               else if (tab === 'simulation') setActiveTab('simulation');
               else if (tab === 'weather') setActiveTab('weather');
               else if (tab === 'satellite') setActiveTab('satellite');
@@ -458,15 +467,70 @@ export default function App() {
         )}
       </main>
 
-      {/* Technical Platform Footer */}
-      <footer className="border-t border-slate-800/80 mt-12 py-6 text-xs font-mono text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
+      {/* Mobile Bottom Navigation Bar (Genuinely responsive for 375px - 768px) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0c1218]/95 backdrop-blur-md border-t border-stone-800 px-2 py-1.5 flex items-center justify-around">
+        <button
+          onClick={() => setActiveTab('overview')}
+          className={`flex flex-col items-center gap-0.5 p-1.5 text-[10px] font-medium transition-colors ${
+            activeTab === 'overview' ? 'text-emerald-400 font-semibold' : 'text-stone-400'
+          }`}
+        >
+          <span className="text-base">🌾</span>
+          <span>Overview</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('farms')}
+          className={`flex flex-col items-center gap-0.5 p-1.5 text-[10px] font-medium transition-colors ${
+            activeTab === 'farms' ? 'text-emerald-400 font-semibold' : 'text-stone-400'
+          }`}
+        >
+          <span className="text-base">📍</span>
+          <span>Farms</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('simulation')}
+          className={`flex flex-col items-center gap-0.5 p-1.5 text-[10px] font-medium transition-colors ${
+            activeTab === 'simulation' ? 'text-emerald-400 font-semibold' : 'text-stone-400'
+          }`}
+        >
+          <span className="text-base">🧪</span>
+          <span>Simulate</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('insights')}
+          className={`flex flex-col items-center gap-0.5 p-1.5 text-[10px] font-medium transition-colors relative ${
+            activeTab === 'insights' || activeTab === 'advisories' ? 'text-emerald-400 font-semibold' : 'text-stone-400'
+          }`}
+        >
+          <span className="text-base">⚠️</span>
+          <span>Insights</span>
+          {advisories.length > 0 && (
+            <span className="absolute top-1 right-2 w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab('copilot')}
+          className={`flex flex-col items-center gap-0.5 p-1.5 text-[10px] font-medium transition-colors ${
+            activeTab === 'copilot' ? 'text-emerald-400 font-semibold' : 'text-emerald-500'
+          }`}
+        >
+          <span className="text-base">🤖</span>
+          <span>TerraTwin</span>
+        </button>
+      </nav>
+
+      {/* Quiet Non-AI-Slop Footer */}
+      <footer className="border-t border-stone-800/60 mt-auto py-5 text-xs text-stone-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
           <div>
-            CropTwin Geospatial Agronomy Engine · WGS-84 EPSG:4326 · Open-Meteo · Copernicus Sentinel-2 L2A · NASA GIBS · ISRIC SoilGrids
+            TerraTwin · Agricultural Digital Twin
           </div>
-          <div className="flex items-center space-x-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
-            <span>Supabase Relational Persistence & RLS Active</span>
+          <div className="text-stone-500">
+            Open-Meteo NWP · Copernicus Sentinel-2 L2A · NASA GIBS · ISRIC SoilGrids
           </div>
         </div>
       </footer>

@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FarmTwin } from '../types/farm-twin';
+import { Sparkles, Menu, X, Plus } from 'lucide-react';
 
 export type NavTab = 
   | 'overview' 
   | 'farms' 
-  | 'digital-twin'
   | 'simulation' 
+  | 'insights' 
+  | 'copilot'
+  | 'digital-twin'
   | 'weather' 
   | 'satellite' 
-  | 'advisories' 
-  | 'copilot'
+  | 'advisories'
   | 'config';
 
 interface HeaderProps {
@@ -19,6 +21,7 @@ interface HeaderProps {
   selectedFarmId: string;
   onSelectFarmId: (farmId: string) => void;
   alertCount: number;
+  onOpenAddFarm?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -28,66 +31,77 @@ export const Header: React.FC<HeaderProps> = ({
   selectedFarmId,
   onSelectFarmId,
   alertCount,
+  onOpenAddFarm,
 }) => {
-  const navItems: Array<{ id: NavTab; label: string; count?: number; isAi?: boolean }> = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'farms', label: 'Farms', count: farms.length },
-    { id: 'digital-twin', label: 'Digital Twin' },
-    { id: 'simulation', label: 'Simulation' },
-    { id: 'weather', label: 'Weather' },
-    { id: 'satellite', label: 'Satellite' },
-    { id: 'advisories', label: 'Advisories', count: alertCount > 0 ? alertCount : undefined },
-    { id: 'copilot', label: 'Gemini Copilot', isAi: true },
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Normalized primary tabs
+  const isTabActive = (tab: 'overview' | 'farms' | 'simulation' | 'insights' | 'copilot') => {
+    if (tab === 'overview') return activeTab === 'overview' || activeTab === 'digital-twin' || activeTab === 'weather' || activeTab === 'satellite';
+    if (tab === 'farms') return activeTab === 'farms';
+    if (tab === 'simulation') return activeTab === 'simulation';
+    if (tab === 'insights') return activeTab === 'insights' || activeTab === 'advisories';
+    if (tab === 'copilot') return activeTab === 'copilot';
+    return false;
+  };
+
+  const navItems = [
+    { id: 'overview' as const, label: 'Overview', icon: '🌾' },
+    { id: 'farms' as const, label: 'My Farms', icon: '📍', count: farms.length },
+    { id: 'simulation' as const, label: 'Simulation', icon: '🧪' },
+    { id: 'insights' as const, label: 'Insights', icon: '⚠️', count: alertCount > 0 ? alertCount : undefined },
   ];
 
   return (
-    <header className="border-b border-slate-800 bg-[#0e141b] text-slate-100 select-none">
-      {/* 3-Zone Top Bar Contract */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
-        {/* Zone 1: Single text element wordmark */}
-        <div className="flex items-center space-x-3 shrink-0">
+    <header className="sticky top-0 z-40 bg-[#0c1218]/95 backdrop-blur-md border-b border-stone-800 text-stone-200 select-none">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+        {/* Zone 1: Brand Wordmark & Subtitle */}
+        <div className="flex items-center gap-3 shrink-0">
           <a
             href="#overview"
             onClick={(e) => {
               e.preventDefault();
               setActiveTab('overview');
             }}
-            className="flex items-baseline space-x-2 text-decoration-none"
+            className="flex flex-col group"
           >
-            <span className="text-base font-bold tracking-tight text-white font-mono uppercase">
-              CropTwin
-            </span>
-            <span className="hidden lg:inline text-xs text-slate-400 font-sans">
-              Geospatial Agronomy Intelligence
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold tracking-tight text-white group-hover:text-emerald-400 transition-colors">
+                TERRATWIN
+              </span>
+              <span className="text-[10px] uppercase tracking-widest text-emerald-500 font-semibold px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/40">
+                Digital Twin
+              </span>
+            </div>
+            <span className="text-[11px] text-stone-400 hidden sm:inline -mt-0.5">
+              Agricultural Digital Twin
             </span>
           </a>
         </div>
 
-        {/* Zone 2: Clean primary text navigation links */}
-        <nav className="flex items-center space-x-1 sm:space-x-2 md:space-x-4 overflow-x-auto scrollbar-none py-1">
+        {/* Zone 2: Streamlined Desktop Navigation */}
+        <nav className="hidden md:flex items-center gap-1 lg:gap-2">
           {navItems.map((item) => {
-            const isActive = activeTab === item.id;
+            const active = isTabActive(item.id);
             return (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`relative px-2.5 py-1.5 text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
-                  isActive
-                    ? 'text-emerald-400 font-semibold border-b-2 border-emerald-400 -mb-[1px]'
-                    : 'text-slate-400 hover:text-slate-200'
+                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${
+                  active
+                    ? 'text-white bg-stone-800/80 border border-stone-700/60'
+                    : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900/40'
                 }`}
               >
-                <span className="flex items-center gap-1">
-                  {item.isAi && <span className="text-emerald-400">✦</span>}
-                  <span>{item.label}</span>
-                </span>
+                <span className="text-base leading-none">{item.icon}</span>
+                <span>{item.label}</span>
                 {item.count !== undefined && (
                   <span
-                    className={`ml-1.5 font-mono text-[10px] tabular-nums ${
-                      isActive ? 'text-emerald-300' : 'text-slate-500'
+                    className={`text-xs px-1.5 py-0.2 rounded-full font-mono tabular-nums ${
+                      active ? 'bg-emerald-900/60 text-emerald-300' : 'bg-stone-800 text-stone-400'
                     }`}
                   >
-                    ({item.count})
+                    {item.count}
                   </span>
                 )}
               </button>
@@ -95,44 +109,122 @@ export const Header: React.FC<HeaderProps> = ({
           })}
         </nav>
 
-        {/* Zone 3: Active Farm Selector & System Link */}
-        <div className="flex items-center space-x-3 shrink-0">
+        {/* Zone 3: Farm Selector & Quick Actions */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Active Farm Switcher dropdown */}
-          <div className="flex items-center space-x-1.5 text-xs">
-            <span className="hidden md:inline text-slate-500 text-[11px] uppercase tracking-wider font-mono">
-              Farm:
-            </span>
+          <div className="flex items-center gap-1.5 text-xs">
+            <label htmlFor="farm-selector" className="sr-only">Select Farm</label>
             <select
+              id="farm-selector"
               value={selectedFarmId}
               onChange={(e) => onSelectFarmId(e.target.value)}
-              className="bg-[#161f2a] border border-slate-700/80 rounded-xs text-xs text-slate-200 px-2 py-1 font-mono focus:outline-hidden focus:border-emerald-500 cursor-pointer"
+              className="bg-stone-900/90 border border-stone-700/80 rounded-md text-xs text-stone-200 px-2.5 py-1.5 max-w-[140px] sm:max-w-[210px] md:max-w-[250px] truncate focus:outline-hidden focus:border-emerald-500 cursor-pointer"
             >
               {farms.length === 0 ? (
-                <option value="">No Farms Registered</option>
+                <option value="">No Farms Yet</option>
               ) : (
                 farms.map((f) => (
                   <option key={f.twinId} value={f.twinId}>
-                    {f.location.district} · {f.farmConfiguration.cropType.toUpperCase()} ({f.farmConfiguration.varietyName})
+                    {f.location.district} · {f.farmConfiguration.cropType.toUpperCase()}
                   </option>
                 ))
               )}
             </select>
           </div>
 
-          {/* Secondary Settings Action */}
+          {/* Ask TerraTwin primary action button */}
           <button
-            onClick={() => setActiveTab('config')}
-            title="System & API Configuration"
-            className={`px-2 py-1 text-xs border rounded-xs transition-colors cursor-pointer ${
-              activeTab === 'config'
-                ? 'border-slate-500 text-white bg-slate-800'
-                : 'border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+            onClick={() => setActiveTab('copilot')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+              activeTab === 'copilot'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-800/60'
             }`}
+            title="Ask TerraTwin AI about this farm"
           >
-            System
+            <span className="text-sm">🤖</span>
+            <span className="hidden sm:inline">Ask TerraTwin</span>
+          </button>
+
+          {/* Add farm shortcut button */}
+          {onOpenAddFarm && (
+            <button
+              onClick={onOpenAddFarm}
+              title="Add New Farm Parcel"
+              className="hidden lg:flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-stone-300 bg-stone-900/80 hover:bg-stone-800 border border-stone-700/70 rounded-md transition-colors cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Farm</span>
+            </button>
+          )}
+
+          {/* Mobile hamburger menu toggle */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 text-stone-400 hover:text-white rounded-md hover:bg-stone-800 cursor-pointer"
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
+
+      {/* Mobile Drawer Navigation */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-stone-800 bg-[#0c1218] px-4 py-3 space-y-1">
+          {navItems.map((item) => {
+            const active = isTabActive(item.id);
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-md transition-colors text-left cursor-pointer ${
+                  active
+                    ? 'text-white bg-stone-800 border border-stone-700/80'
+                    : 'text-stone-300 hover:text-white hover:bg-stone-900'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="text-base">{item.icon}</span>
+                  <span>{item.label}</span>
+                </div>
+                {item.count !== undefined && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-stone-800 text-stone-400 font-mono">
+                    {item.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+
+          <button
+            onClick={() => {
+              setActiveTab('copilot');
+              setMobileMenuOpen(false);
+            }}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-emerald-300 bg-emerald-950/60 border border-emerald-800/60 rounded-md mt-2"
+          >
+            <span className="text-base">🤖</span>
+            <span>Ask TerraTwin AI</span>
+          </button>
+
+          {onOpenAddFarm && (
+            <button
+              onClick={() => {
+                onOpenAddFarm();
+                setMobileMenuOpen(false);
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-stone-300 bg-stone-900 border border-stone-800 rounded-md mt-1"
+            >
+              <Plus className="w-4 h-4 text-emerald-400" />
+              <span>Register New Farm</span>
+            </button>
+          )}
+        </div>
+      )}
     </header>
   );
 };

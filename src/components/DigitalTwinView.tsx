@@ -110,7 +110,7 @@ export const DigitalTwinView: React.FC<DigitalTwinViewProps> = ({
             {pipelineEval.diagnosticMessage}
           </p>
           <div className="text-[11px] text-slate-400 pt-1">
-            Required pipeline stages: <strong>USER FARM → REAL WEATHER → REAL SATELLITE → SOIL → CROPTWIN MODEL</strong>
+            Required pipeline stages: <strong>USER FARM → REAL WEATHER → REAL SATELLITE → SOIL → TERRATWIN BIOPHYSICAL MODEL</strong>
           </div>
         </div>
       ) : (

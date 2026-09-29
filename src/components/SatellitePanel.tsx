@@ -319,7 +319,7 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
                   Scene <strong className="text-slate-200">{satellite?.sceneId || 'Sentinel-2 L2A'}</strong> was successfully located in the Copernicus Data Space Ecosystem. However, computing pixel-level mathematical band ratios (B08 NIR minus B04 Red) requires downloading the 1.1GB full spectral SAFE raster bundle via CDSE OAuth credentials (<code className="text-emerald-400">COPERNICUS_CLIENT_SECRET</code>).
                 </p>
                 <div className="p-3 bg-amber-950/20 border border-amber-800/40 rounded-xs text-amber-300 text-[11px]">
-                  <strong>Zero-Fake-Data Guarantee:</strong> Rather than hardcoding fake NDVI numbers (e.g. 0.684), CropTwin honestly displays this state. Add CDSE credentials or Earth Engine token to automatically calculate mathematical band ratios.
+                  <strong>Zero-Fake-Data Guarantee:</strong> Rather than hardcoding fake NDVI numbers, TerraTwin honestly displays this state. Add CDSE credentials or Earth Engine token to automatically calculate mathematical band ratios.
                 </div>
               </div>
             )}

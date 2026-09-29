@@ -357,7 +357,7 @@ export const WeatherPanel: React.FC<WeatherPanelProps> = ({
 
           <div className="space-y-3 font-sans text-slate-300 text-xs leading-relaxed">
             <p>
-              In accordance with CropTwin strict data authenticity policies:
+              In accordance with TerraTwin strict data authenticity policies:
             </p>
             <ul className="list-disc pl-5 space-y-1.5 text-slate-400 font-mono text-[11px]">
               <li>Open-Meteo is never labeled as IMD data.</li>

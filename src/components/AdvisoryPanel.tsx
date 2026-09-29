@@ -115,11 +115,11 @@ export const AdvisoryPanel: React.FC<AdvisoryPanelProps> = ({
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Gemini unavailable/not configured.');
+        throw new Error(data.error || "Gemini isn't configured yet.");
       }
       setAiExplanation(data.advisoryText);
     } catch (err: any) {
-      setExplainError(err.message || 'Gemini unavailable/not configured.');
+      setExplainError(err.message || "Gemini isn't configured yet.");
       setAiExplanation(null);
     } finally {
       setIsExplaining(false);
@@ -266,7 +266,7 @@ export const AdvisoryPanel: React.FC<AdvisoryPanelProps> = ({
                 )}
               </div>
 
-              {/* Explain with Gemini AI button */}
+              {/* Explain with TerraTwin AI button */}
               <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
                 <span className="text-[11px] text-slate-400 font-mono">
                   Deep agronomic science & smallholder guidance:
@@ -277,7 +277,7 @@ export const AdvisoryPanel: React.FC<AdvisoryPanelProps> = ({
                   className="px-3 py-1.5 bg-emerald-700/80 hover:bg-emerald-600 disabled:opacity-50 text-white text-xs font-mono font-semibold rounded-xs transition-colors cursor-pointer flex items-center gap-1.5"
                 >
                   <Sparkles className={`w-3.5 h-3.5 ${isExplaining ? 'animate-spin' : ''}`} />
-                  <span>{isExplaining ? 'Explaining...' : 'Explain Prescription with Gemini'}</span>
+                  <span>{isExplaining ? 'Explaining...' : 'Explain Prescription with TerraTwin AI'}</span>
                 </button>
               </div>
 
@@ -289,7 +289,7 @@ export const AdvisoryPanel: React.FC<AdvisoryPanelProps> = ({
                       <Bot className="w-4 h-4" />
                       <span>AI EXPLANATION (Grounded in Model Result)</span>
                     </div>
-                    <span className="text-[10px] text-slate-500 font-mono">Source: Gemini 3.8 Flash</span>
+                    <span className="text-[10px] text-slate-500 font-mono">Source: TerraTwin AI</span>
                   </div>
                   <div className="text-slate-200 whitespace-pre-wrap leading-relaxed space-y-2">
                     {aiExplanation}

@@ -1,5 +1,5 @@
 /**
- * CropTwin - Google-Native Full-Stack Server
+ * TerraTwin - Agricultural Digital Twin Platform Server
  * Express backend with server-side Gemini API, Agro-meteorology endpoints,
  * and Vite middleware integration running on Port 3000.
  */
@@ -30,18 +30,24 @@ app.use(express.json({ limit: '10mb' }));
 // Initialize Google Gemini Client server-side
 // Reads GEMINI_API_KEY from environment without exposing to frontend
 const geminiApiKey = process.env.GEMINI_API_KEY || '';
-const ai = new GoogleGenAI(geminiApiKey ? { apiKey: geminiApiKey } : {});
+const ai = new GoogleGenAI(geminiApiKey ? {
+  apiKey: geminiApiKey,
+  httpOptions: {
+    headers: {
+      'User-Agent': 'aistudio-build',
+    },
+  },
+} : {});
 
 /**
- * Robust Gemini model invoker with alias fallback
- * Uses gemini-flash-latest and falls back to gemini-2.5-flash during transient spikes.
+ * Robust Gemini model invoker using gemini-3.8-flash with gemini-flash-latest alias
  */
 async function callGemini(contents: any, systemInstruction?: string): Promise<{ text: string; modelUsed: string }> {
   if (!geminiApiKey) {
-    throw new Error('Gemini unavailable/not configured. Server-side GEMINI_API_KEY is not set.');
+    throw new Error("Gemini isn't configured yet. Please set GEMINI_API_KEY in your server or Netlify environment variables.");
   }
 
-  const modelsToTry = ['gemini-2.5-flash', 'gemini-flash-latest'];
+  const modelsToTry = ['gemini-3.8-flash', 'gemini-flash-latest'];
   let lastError: any = null;
 
   for (const model of modelsToTry) {
@@ -61,7 +67,15 @@ async function callGemini(contents: any, systemInstruction?: string): Promise<{ 
     }
   }
 
-  throw new Error(lastError?.message || 'Gemini unavailable/not configured.');
+  let cleanMsg = lastError?.message || "Gemini isn't configured yet.";
+  try {
+    const parsed = JSON.parse(cleanMsg);
+    if (parsed.error?.message) {
+      cleanMsg = parsed.error.message;
+    }
+  } catch {}
+
+  throw new Error(cleanMsg);
 }
 
 /**
@@ -194,8 +208,8 @@ ${advisoriesText}
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({
     status: 'healthy',
-    platform: 'CropTwin Agricultural Digital Twin Platform',
-    runtime: 'Node.js Express / Supabase Edge Functions',
+    platform: 'TerraTwin Agricultural Digital Twin Platform',
+    runtime: 'Node.js Express / Netlify Serverless',
     database: 'Supabase PostgreSQL (RLS Enforced)',
     auth: 'Supabase Authentication',
     storage: 'Supabase Storage',
@@ -204,7 +218,7 @@ app.get('/api/health', (req: Request, res: Response) => {
     satelliteProvider: 'Copernicus Data Space Ecosystem (Sentinel-2 L2A)',
     soilProvider: 'ISRIC SoilGrids 2.0 (250m Spatial Model)',
     smsServiceConfigured: smsProvider.isConfigured(),
-    ai: geminiApiKey ? 'Gemini 3.8 Flash / Flash Latest (Active)' : 'Gemini unavailable/not configured',
+    ai: geminiApiKey ? 'Gemini 3.8 Flash / Flash Latest (Active)' : "Gemini isn't configured yet.",
     timestamp: new Date().toISOString(),
   });
 });
@@ -213,10 +227,10 @@ app.get('/api/health', (req: Request, res: Response) => {
 app.get('/api/gemini/status', (req: Request, res: Response) => {
   res.json({
     configured: Boolean(geminiApiKey),
-    model: 'gemini-flash-latest / gemini-3.8-flash',
+    model: 'gemini-3.8-flash',
     message: geminiApiKey
-      ? 'Gemini Agricultural Copilot operational with server-side credentials.'
-      : 'Gemini unavailable/not configured.',
+      ? 'TerraTwin AI operational with server-side credentials.'
+      : "Gemini isn't configured yet.",
   });
 });
 
@@ -386,21 +400,21 @@ app.post('/api/gemini/copilot', async (req: Request, res: Response) => {
     const { farmTwin, weather, satellite, soil, advisories, messages, userQuery, language = 'en' } = req.body;
 
     if (!geminiApiKey) {
-      return res.status(503).json({
+      return res.status(200).json({
         success: false,
-        error: 'Gemini unavailable/not configured. GEMINI_API_KEY is not configured on the server.',
+        error: "Gemini isn't configured yet. Please set GEMINI_API_KEY in your server or Netlify environment variables.",
       });
     }
 
     const telemetryContext = buildFarmContextPrompt(farmTwin, weather, satellite, soil, advisories);
 
-    const systemInstruction = `You are CropTwin Agricultural Copilot, a senior computational agronomist and decision intelligence assistant for smallholder farmers across India.
+    const systemInstruction = `You are TerraTwin AI, a senior computational agronomist and decision intelligence assistant for smallholder farmers across India.
 
 STRICT GROUNDING & ZERO-FABRICATION CONTRACT:
-1. You interpret and explain ACTUAL telemetry data and CropTwin mathematical model calculations.
+1. You interpret and explain ACTUAL telemetry data and digital twin biophysical model calculations.
 2. DO NOT invent measurements. If an observation or telemetry input is marked UNAVAILABLE, state clearly that it is unavailable. Never guess or fabricate values.
 3. Distinguish clearly:
-   - [MODEL RESULT]: Underlying biophysical equations calculated by CropTwin (e.g., thermal degree-days, FAO-56 Penman-Monteith water stress, phenological phase).
+   - [MODEL RESULT]: Underlying biophysical equations calculated by the digital twin (e.g., thermal degree-days, FAO-56 Penman-Monteith water stress, phenological phase).
    - [AI EXPLANATION]: Your agronomic synthesis, root-cause diagnosis, practical smallholder action plan, and risk interpretation.
 4. Yield predictions are ALWAYS model predictions based on current stress penalties, NEVER actual measured harvested yield.
 5. Provide actionable, low-cost recommendations tailored to Indian agricultural contexts (ICAR practices, integrated pest management, precision irrigation schedules, balanced NPK foliar spray).
@@ -459,14 +473,14 @@ app.post('/api/gemini/explain-simulation', async (req: Request, res: Response) =
     const { farmTwin, baselineState, simulatedState, deltas, scenarioDescription, language = 'en' } = req.body;
 
     if (!geminiApiKey) {
-      return res.status(503).json({
+      return res.status(200).json({
         success: false,
-        error: 'Gemini unavailable/not configured.',
+        error: "Gemini isn't configured yet. Please set GEMINI_API_KEY in your server or Netlify environment variables.",
       });
     }
 
-    const systemInstruction = `You are CropTwin Agricultural Copilot.
-The CropTwin mathematical engine has already executed the numerical biophysical simulation.
+    const systemInstruction = `You are TerraTwin AI.
+The mathematical engine has already executed the numerical biophysical simulation.
 YOUR ROLE: Explain WHY the stress and predicted yield changed under this scenario. DO NOT perform arithmetic or invent new numbers.
 Strictly interpret the model result deltas. Clearly distinguish [MODEL RESULT] from [AI EXPLANATION].`;
 
@@ -477,7 +491,7 @@ Current DAP: ${farmTwin?.currentState?.daysAfterPlanting || 65} (Stage: ${farmTw
 SIMULATION SCENARIO INPUTS:
 - Scenario: ${scenarioDescription || 'Custom microclimate / irrigation scenario adjustment'}
 
-CROPTWIN NUMERICAL MODEL OUTPUTS:
+NUMERICAL MODEL OUTPUTS:
 Baseline Yield: ${baselineState?.yieldKgHa || 2100} kg/ha
 Simulated Yield: ${simulatedState?.yieldKgHa || 1850} kg/ha
 Yield Delta: ${deltas?.yieldDeltaKgHa > 0 ? '+' : ''}${deltas?.yieldDeltaKgHa || -250} kg/ha (${deltas?.yieldDeltaPct > 0 ? '+' : ''}${deltas?.yieldDeltaPct || -12}%)
@@ -505,9 +519,9 @@ Format in clear bullet points. Language: ${language}.
     });
   } catch (error: any) {
     console.error('[Gemini Explain Simulation Error]', error);
-    res.status(503).json({
+    res.status(500).json({
       success: false,
-      error: error.message || 'Gemini unavailable/not configured.',
+      error: error.message || "Gemini isn't configured yet.",
     });
   }
 });
@@ -521,13 +535,13 @@ app.post('/api/gemini/advisor', async (req: Request, res: Response) => {
     const { farmTwin, advisory, language = 'en' } = req.body;
 
     if (!geminiApiKey) {
-      return res.status(503).json({
+      return res.status(200).json({
         success: false,
-        error: 'Gemini unavailable/not configured.',
+        error: "Gemini isn't configured yet. Please set GEMINI_API_KEY in your server or Netlify environment variables.",
       });
     }
 
-    const systemInstruction = `You are CropTwin Agricultural Copilot.
+    const systemInstruction = `You are TerraTwin AI.
 Explain the agronomic science behind this model-generated advisory and provide step-by-step smallholder instructions.
 Strictly respect the model conditions; do NOT invent other observations.
 Clearly separate [MODEL RESULT] from [AI EXPLANATION].`;
@@ -607,9 +621,9 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[CropTwin Platform] Server running on http://0.0.0.0:${PORT}`);
-    console.log(`[CropTwin Platform] Mode: ${isProduction ? 'Production' : 'Development with Vite middleware'}`);
-    console.log(`[CropTwin Platform] Database: Supabase PostgreSQL with Row Level Security`);
+    console.log(`[TerraTwin Platform] Server running on http://0.0.0.0:${PORT}`);
+    console.log(`[TerraTwin Platform] Mode: ${isProduction ? 'Production' : 'Development with Vite middleware'}`);
+    console.log(`[TerraTwin Platform] Database: Supabase PostgreSQL with Row Level Security`);
   });
 }
 
